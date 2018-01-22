@@ -15,5 +15,3 @@ These data include:
 
 # Requirements
 1. RStudio
-
-Create an interactive leaflet map 
