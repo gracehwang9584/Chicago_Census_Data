@@ -23,7 +23,6 @@ library( scales )
 library( sp )
 library( rgdal )
 
-
 ###########################
 ## Import necessary data ##
 ###########################
@@ -241,16 +240,27 @@ label_hardship <- lapply(
   , HTML)
 
 # Make map
-census_map <- leaflet( merged ) %>%
-
+census_map <- leaflet( data = merged 
+                       , options = leafletOptions( zoomControl = FALSE
+                                                   , minZoom = 11
+                                                   , maxZoom = 11
+                                                   , dragging = FALSE
+                                                   )
+                       ) %>%
+  
   # add background to map
-  addTiles(urlTemplate = "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png" ) %>%
+  addTiles( urlTemplate = "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png" ) %>%
   
   # set zoom level
   setView( lng = -87.707988
            , lat = 41.832249
-           , zoom = 10.5
+           , zoom = 11
   ) %>%
+  
+  # add title
+  addMarkers( "Census Data"
+              , position = "topleft"
+              ) %>%
   
   # add Crowded Housing polygons
   addPolygons( smoothFactor = 0.3
@@ -375,48 +385,48 @@ census_map <- leaflet( merged ) %>%
                                     )
                     , position = "topright"
                     , options = layersControlOptions( collapsed = FALSE )
-  )
+  ) 
 
 ######################
 ## Create dashboard ##
 ######################
 # Create a header
-header <- dashboardHeader( title = "City of Chicago Census Data"
-                           , titleWidth = 300
-                           ) # end of header
+# header <- dashboardHeader( title = "City of Chicago Census Data"
+#                            , titleWidth = 300
+#                            ) # end of header
 
 
 # Create a sidebar
-sidebar <- dashboardSidebar(
-  sidebarMenu(
-    menuItem( "Citywide", tabName = "Citywide", icon = icon( "home" ) )
-  )
-  , width = 300
-) # end of sidebar
+# sidebar <- dashboardSidebar(
+#   sidebarMenu(
+#     menuItem( "Citywide", tabName = "Citywide", icon = icon( "home" ) )
+#   )
+#   , width = 300
+# ) # end of sidebar
 
 
 # Create a body
-body <- dashboardBody(
-  
-  # initialize tabs
-  tabItems(
-    tabItem(tabName = "Citywide"
-            , fluidRow(
-              box( title = "View Map"
-                   , status = "primary"
-                   , solidHeader = TRUE
-                   , collapsible = FALSE
-                   , width = 12
-                   , column( width = 12
-                             , leaflet::leafletOutput( outputId = "mymap"
-                                                       , height = 1000
-                                                       )
-                             ) # end of column
-                   ) # end of box
-            ) # end of fluidrow
-            ) # end of Citywide tab
-    )
-  ) # end of body
+# body <- dashboardBody(
+#   
+#   # initialize tabs
+#   tabItems(
+#     tabItem(tabName = "Citywide"
+#             , fluidRow(
+#               box( title = "View Map"
+#                    , status = "primary"
+#                    , solidHeader = TRUE
+#                    , collapsible = FALSE
+#                    , width = 12
+#                    , column( width = 12
+#                              , leaflet::leafletOutput( outputId = "mymap"
+#                                                        , height = 1000
+#                                                        )
+#                              ) # end of column
+#                    ) # end of box
+#             ) # end of fluidrow
+#             ) # end of Citywide tab
+#     )
+#   ) # end of body
 
 
 # Create a server
@@ -424,83 +434,95 @@ server <- function( input, output ) {
   
   # render leaflet output
   output$mymap <- leaflet::renderLeaflet({
-    census_map
+    census_map 
   }) # end of renderleaflet
   
   # Dynamic Legend
-  # observeEvent( input$mymap_groups,{
-  #   
-  #   mymap <- leafletProxy( "mymap" ) %>% clearControls()
-  #   
-  #   if( input$mymap_groups == "Percent of Crowded Housing" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_crowded
-  #                                  , values = merged$PERCENT.OF.HOUSING.CROWDED
-  #                                  , title = "Percent of Crowded Housing"
-  #                                  , labFormat = labelFormat( suffix = "%" )
-  #                                  , opacity = 1
-  #     ) }
-  #   else if( input$mymap_groups == "Percent of Households Below Poverty" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_poverty
-  #                                  , values = merged$PERCENT.HOUSEHOLDS.BELOW.POVERTY
-  #                                  , title = "Percent of Households Below Poverty"
-  #                                  , labFormat = labelFormat( suffix = "%" )
-  #                                  , opacity = 1
-  #     ) }
-  #   else if( input$mymap_groups == "Percent of Aged 16+ Unemployed" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_unemployed
-  #                                  , values = merged$PERCENT.AGED.16..UNEMPLOYED
-  #                                  , title = "Percent of Aged 16+ Unemployed"
-  #                                  , labFormat = labelFormat( suffix = "%" )
-  #                                  , opacity = 1
-  #     ) }
-  #   else if( input$mymap_groups == "Percent of Aged 25+ Without High School Diploma" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_diploma
-  #                                  , values = merged$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA
-  #                                  , title = "Percent of Aged 25+ Without High School Diploma"
-  #                                  , labFormat = labelFormat( suffix = "%" )
-  #                                  , opacity = 1
-  #     ) }
-  #   else if( input$mymap_groups == "Percent of Aged Under 18 or Over 64" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_age
-  #                                  , values = merged$PERCENT.AGED.UNDER.18.OR.OVER.64
-  #                                  , title = "Percent of Aged Under 18 or Over 64"
-  #                                  , labFormat = labelFormat( suffix = "%" )
-  #                                  , opacity = 1
-  #     ) }
-  #   else if( input$mymap_groups == "Per Capita Income" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_income
-  #                                  , values = merged$PER.CAPITA.INCOME
-  #                                  , title = "Per Capita Income"
-  #                                  , labFormat = labelFormat( prefix = "$" )
-  #                                  , opacity = 1
-  #     ) }
-  #   else if( input$mymap_groups == "Hardship Index" ) {
-  #     mymap <- mymap %>% addLegend( "bottomright"
-  #                                  , pal = color_ramp_hardship
-  #                                  , values = merged$HARDSHIP.INDEX
-  #                                  , title = "Hardship Index"
-  #                                  , opacity = 1
-  #     ) } # end of else if
-  # }
-  # ) # end of observe event 
+   observeEvent( input$mymap_groups,{
+   
+     mymap <- leafletProxy( "mymap" ) %>% clearControls()
+   
+     if( input$mymap_groups == "Percent of Crowded Housing" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_crowded
+                                    , values = merged$PERCENT.OF.HOUSING.CROWDED
+                                    , title = "Legend"
+                                    , labels = c( "0.0 - 1.8%", "1.9 - 3.2%", "3.3 - 4.5%", "4.6 - 7.4%", "7.5 - 15.8%" )
+                                    #, labFormat = labelFormat( suffix = "%" )
+                                    , opacity = 1
+                                    , group = "Percent of Crowded Housing"
+       ) }
+     else if( input$mymap_groups == "Percent of Households Below Poverty" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_poverty
+                                    , values = merged$PERCENT.HOUSEHOLDS.BELOW.POVERTY
+                                    , title = "Legend"
+                                    , labels = c( "0.0 - 12.3%", "12.4 - 16.9%", "17.0 - 21.7%", "21.8 - 29.6%", "29.7 - 56.5%" )
+                                    #, labFormat = labelFormat( suffix = "%" )
+                                    , opacity = 1
+                                    , group = "Percent of Households Below Poverty"
+       ) }
+     else if( input$mymap_groups == "Percent of Aged 16+ Unemployed" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_unemployed
+                                    , values = merged$PERCENT.AGED.16..UNEMPLOYED
+                                    , title = "Legend"
+                                    , labels = c( "0.0 - 8.7%", "8.8 - 11.7%", "11.8 - 16.5%", "16.6 - 21.1%", "21.2 - 35.9%" )
+                                    #, labFormat = labelFormat( suffix = "%" )
+                                    , opacity = 1
+                                    , group = "Percent of Aged 16+ Unemployed"
+       ) }
+     else if( input$mymap_groups == "Percent of Aged 25+ Without High School Diploma" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_diploma
+                                    , values = merged$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA
+                                    , title = "Legend"
+                                    , labels = c( "0.0 - 10.9%", "11.0 - 15.9%", "16.0 - 20.8%", "20.9 - 28.5%", "28.6 - 54.8%" )
+                                    #, labFormat = labelFormat( suffix = "%" )
+                                    , opacity = 1
+                                    , group = "Percent of Aged 25+ Without High School Diploma"
+       ) }
+     else if( input$mymap_groups == "Percent of Aged Under 18 or Over 64" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_age
+                                    , values = merged$PERCENT.AGED.UNDER.18.OR.OVER.64
+                                    , title = "Legend"
+                                    , labels = c( "0.0 - 30.7%", "30.8 - 36.4%", "36.5 - 39.0%", "39.1 - 41.0%", "41.1 - 51.5%" )
+                                    #, labFormat = labelFormat( suffix = "%" )
+                                    , opacity = 1
+                                    , group = "Percent of Aged Under 18 or Over 64"
+       ) }
+     else if( input$mymap_groups == "Per Capita Income" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_income
+                                    , values = merged$PER.CAPITA.INCOME
+                                    , title = "Legend"
+                                    , labels = c( "$0 - 14,685", "$14,686 - 17,949", "$17,950 - 23,791", "$23,792 - 33,385", "$33,386 - 88,669" )
+                                    #, labFormat = labelFormat( prefix = "$" )
+                                    , opacity = 1
+                                    , group = "Per Capita Income"
+       ) }
+     else if( input$mymap_groups == "Hardship Index" ) {
+       mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color_ramp_hardship
+                                    , values = merged$HARDSHIP.INDEX
+                                    , title = "Legend"
+                                    , labels = c( "0 - 20", "21 - 39", "40 - 58", "59 - 78", "79 - 98" )
+                                    , opacity = 1
+                                    , group = "Hardship Index"
+       ) } # end of else if
+   }
+   ) # end of observe event
   
 } # closing out server
 
 
 # Create the UI
-ui <- dashboardPage(
-  header
-  , sidebar
-  , body
-)
 
+ui <- fillPage( leaflet::leafletOutput( outputId = "mymap", height = "100%" ) )
 
 # Preview the UI in the console
 shinyApp( ui, server )
+
+
 
