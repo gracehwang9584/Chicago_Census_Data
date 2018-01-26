@@ -3,33 +3,26 @@
 # Date:     Jan 10, 2018
 # Purpose:  Using Leaflet to produce an interactive 
 #           chloropleth map based on the 
-#           Census Data 2008-2012
+#           Census Data - Selected socioeconomic indicators in Chicago, 2008  2012
+#           See original data here: https://data.cityofchicago.org/Health-Human-Services/Census-Data-Selected-socioeconomic-indicators-in-C/kn9c-c2s2/data
 
 
 #############################
 ## Load necessary packages ##
 #############################
 library( leaflet )
-library( dplyr )
-library( magrittr )
 library( htmltools )
-library( htmlwidgets )
 library( shiny )
-library( shinydashboard )
-library( stringr )
-library( DT )
-library( geojsonio )
-library( scales )
 library( sp )
 library( rgdal )
 
 ###########################
-## Import necessary data ##
+## Load necessary data ##
 ###########################
-census.data <- read.csv( file = "/Users/gracehwang/desktop/Census Data/Census_Data.csv"
+census.data <- read.csv( file = "https://data.cityofchicago.org/api/views/kn9c-c2s2/rows.csv?accessType=DOWNLOAD"
                          , header = TRUE
                          , stringsAsFactors = FALSE
-                         )
+)
 
 # check dim
 dim( census.data ) # [1] 78  9
@@ -42,155 +35,104 @@ colnames( census.data )
 # [7] "PERCENT.AGED.UNDER.18.OR.OVER.64"             "PER.CAPITA.INCOME"                           
 # [9] "HARDSHIP.INDEX"  
 
-
-##################
-## Make the map ##
-##################
-# Load necessary dataframe
-# Save copied link as a character vector
-geojson_comarea_url <- "https://data.cityofchicago.org/api/geospatial/cauq-8yn6?method=export&format=GEOJSON"
-
-# Transform vector into spatial dataframe
-comarea <- readOGR( dsn = geojson_comarea_url
+# Transform URL into spatial dataframe
+comarea <- readOGR( dsn = "https://data.cityofchicago.org/api/geospatial/cauq-8yn6?method=export&format=GEOJSON"
                     , layer = "OGRGeoJSON"
                     , stringsAsFactors = FALSE
 )
-# OGR data source with driver: GeoJSON 
-# Source: "https://data.cityofchicago.org/api/geospatial/cauq-8yn6?method=export&format=GEOJSON", layer: "OGRGeoJSON"
-# with 77 features
-# It has 9 fields
 
-# Merge the 2 dataframes
-merged <- sp::merge( comarea
-                     , census.data
+# Merge the non-spatial data frame onto spatial polygon data frame
+comarea <- sp::merge( x = comarea
+                     , y = census.data
                      , by.x = "area_numbe"
                      , by.y = "Community.Area.Number"
-                     )
+)
 
 # Make colors
-# Crowded Housing
-color_crowded <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Poverty
-color_poverty <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Unemployed
-color_unemployed <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Diploma
-color_diploma <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Age
-color_age <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Income
-color_income <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Hardship
-color_hardship <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
-
-# Decide how many groups you want
-# Crowded Housing
-color_ramp_crowded <- color_crowded( 5 )
-
-# Poverty
-color_ramp_poverty <- color_poverty( 5 )
-
-# Unemployed
-color_ramp_unemployed <- color_unemployed( 5 )
-
-# Diploma
-color_ramp_diploma <- color_diploma( 5 )
-
-# Age
-color_ramp_age <- color_age( 5 )
-
-# Income
-color_ramp_income <- color_income( 5 )
-
-# Harship
-color_ramp_hardship <- color_hardship( 5 )
+color.function <- colorRampPalette( c( "#CCCCCC", "#660066" ) )
+color.ramp <- color.function( n = 5 )
 
 # Assign colors to groups
 # Crowded Housing
-merged$color_crowded <- as.character(
+comarea$color_crowded <- as.character(
   cut(
-    x = rank( merged$PERCENT.OF.HOUSING.CROWDED )
+    x = rank( comarea$PERCENT.OF.HOUSING.CROWDED )
     , breaks = 5
-    , labels = color_ramp_crowded
+    , labels = color.ramp
   )
 )
 
 # Poverty
-merged$color_poverty <- as.character(
+comarea$color_poverty <- as.character(
   cut(
-    x = rank( merged$PERCENT.HOUSEHOLDS.BELOW.POVERTY )
+    x = rank( comarea$PERCENT.HOUSEHOLDS.BELOW.POVERTY )
     , breaks = 5
-    , labels = color_ramp_poverty
+    , labels = color.ramp
   )
 )
 
 # Unemployed
-merged$color_unemployed <- as.character(
+comarea$color_unemployed <- as.character(
   cut(
-    x = rank( merged$PERCENT.AGED.16..UNEMPLOYED )
+    x = rank( comarea$PERCENT.AGED.16..UNEMPLOYED )
     , breaks = 5
-    , labels = color_ramp_unemployed
+    , labels = color.ramp
   )
 )
 
 # Diploma
-merged$color_diploma <- as.character(
+comarea$color_diploma <- as.character(
   cut(
-    x = rank( merged$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA )
+    x = rank( comarea$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA )
     , breaks = 5
-    , labels = color_ramp_diploma
+    , labels = color.ramp
   )
 )
 
 # Age
-merged$color_age <- as.character(
+comarea$color_age <- as.character(
   cut(
-    x = rank( merged$PERCENT.AGED.UNDER.18.OR.OVER.64 )
+    x = rank( comarea$PERCENT.AGED.UNDER.18.OR.OVER.64 )
     , breaks = 5
-    , labels = color_ramp_age
+    , labels = color.ramp
   )
 )
 
 # Income
-merged$color_income <- as.character(
+comarea$color_income <- as.character(
   cut(
-    x = rank( merged$PER.CAPITA.INCOME )
+    x = rank( comarea$PER.CAPITA.INCOME )
     , breaks = 5
-    , labels = color_ramp_income
+    , labels = color.ramp
   )
 )
 
 # Hardship
-merged$color_hardship <- as.character(
+comarea$color_hardship <- as.character(
   cut(
-    x = rank( merged$HARDSHIP.INDEX )
+    x = rank( comarea$HARDSHIP.INDEX )
     , breaks = 5
-    , labels = color_ramp_hardship
+    , labels = color.ramp
   )
 )
 
-# Make hover layer
+# Make hover labels
+# Courtesy of https://github.com/USAspendingexplorer/USAspending-explorer/blob/master/Build%20App/leaflet_ny.r#L36
 # Crowded Housing
 label_crowded <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s percent"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$PERCENT.OF.HOUSING.CROWDED
-    )
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$PERCENT.OF.HOUSING.CROWDED
+  )
   , HTML)
 
 # Poverty
 label_poverty <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s percent"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$PERCENT.HOUSEHOLDS.BELOW.POVERTY
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$PERCENT.HOUSEHOLDS.BELOW.POVERTY
   )
   , HTML)
 
@@ -198,8 +140,8 @@ label_poverty <- lapply(
 label_unemployed <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s percent"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$PERCENT.AGED.16..UNEMPLOYED
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$PERCENT.AGED.16..UNEMPLOYED
   )
   , HTML)
 
@@ -207,8 +149,8 @@ label_unemployed <- lapply(
 label_diploma <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s percent"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA
   )
   , HTML)
 
@@ -216,8 +158,8 @@ label_diploma <- lapply(
 label_age <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s percent"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$PERCENT.AGED.UNDER.18.OR.OVER.64
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$PERCENT.AGED.UNDER.18.OR.OVER.64
   )
   , HTML)
 
@@ -225,8 +167,8 @@ label_age <- lapply(
 label_income <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s dollars"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$PER.CAPITA.INCOME
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$PER.CAPITA.INCOME
   )
   , HTML)
 
@@ -234,19 +176,19 @@ label_income <- lapply(
 label_hardship <- lapply(
   sprintf(
     "<strong>%s:</strong></br/>%s"
-    , merged$COMMUNITY.AREA.NAME
-    , merged$HARDSHIP.INDEX
+    , comarea$COMMUNITY.AREA.NAME
+    , comarea$HARDSHIP.INDEX
   )
   , HTML)
 
 # Make map
-census_map <- leaflet( data = merged 
-                       , options = leafletOptions( zoomControl = FALSE
+census_map <- 
+  leaflet( data = comarea
+           , options = leafletOptions( zoomControl = FALSE
                                                    , minZoom = 11
                                                    , maxZoom = 11
                                                    , dragging = FALSE
-                                                   )
-                       ) %>%
+                                                   ) ) %>%
   
   # add background to map
   addTiles( urlTemplate = "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png" ) %>%
@@ -257,15 +199,10 @@ census_map <- leaflet( data = merged
            , zoom = 11
   ) %>%
   
-  # add title
-  addMarkers( "Census Data"
-              , position = "topleft"
-              ) %>%
-  
   # add Crowded Housing polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_crowded
+               , fillOpacity = 1
+               , fillColor = comarea$color_crowded
                , color = "white"
                , label = label_crowded
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -280,8 +217,8 @@ census_map <- leaflet( data = merged
   
   # Add Poverty polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_poverty
+               , fillOpacity = 1
+               , fillColor = comarea$color_poverty
                , color = "white"
                , label = label_poverty
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -296,8 +233,8 @@ census_map <- leaflet( data = merged
   
   # Add Unemployed polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_unemployed
+               , fillOpacity = 1
+               , fillColor = comarea$color_unemployed
                , color = "white"
                , label = label_unemployed
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -312,8 +249,8 @@ census_map <- leaflet( data = merged
   
   # Add Diploma polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_diploma
+               , fillOpacity = 1
+               , fillColor = comarea$color_diploma
                , color = "white"
                , label = label_diploma
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -328,8 +265,8 @@ census_map <- leaflet( data = merged
   
   # Add Age polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_age
+               , fillOpacity = 1
+               , fillColor = comarea$color_age
                , color = "white"
                , label = label_age
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -344,8 +281,8 @@ census_map <- leaflet( data = merged
   
   # Add Income polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_income
+               , fillOpacity = 1
+               , fillColor = comarea$color_income
                , color = "white"
                , label = label_income
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -360,8 +297,8 @@ census_map <- leaflet( data = merged
   
   # Add Hardship polygons
   addPolygons( smoothFactor = 0.3
-               , fillOpacity = 0.5
-               , fillColor = merged$color_hardship
+               , fillOpacity = 1
+               , fillColor = comarea$color_hardship
                , color = "white"
                , label = label_hardship
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
@@ -382,51 +319,14 @@ census_map <- leaflet( data = merged
                                     , "Percent of Aged Under 18 or Over 64"
                                     , "Per Capita Income"
                                     , "Hardship Index"
-                                    )
-                    , position = "topright"
-                    , options = layersControlOptions( collapsed = FALSE )
+  )
+  , position = "topright"
+  , options = layersControlOptions( collapsed = FALSE )
   ) 
 
-######################
-## Create dashboard ##
-######################
-# Create a header
-# header <- dashboardHeader( title = "City of Chicago Census Data"
-#                            , titleWidth = 300
-#                            ) # end of header
+# Create the UI
 
-
-# Create a sidebar
-# sidebar <- dashboardSidebar(
-#   sidebarMenu(
-#     menuItem( "Citywide", tabName = "Citywide", icon = icon( "home" ) )
-#   )
-#   , width = 300
-# ) # end of sidebar
-
-
-# Create a body
-# body <- dashboardBody(
-#   
-#   # initialize tabs
-#   tabItems(
-#     tabItem(tabName = "Citywide"
-#             , fluidRow(
-#               box( title = "View Map"
-#                    , status = "primary"
-#                    , solidHeader = TRUE
-#                    , collapsible = FALSE
-#                    , width = 12
-#                    , column( width = 12
-#                              , leaflet::leafletOutput( outputId = "mymap"
-#                                                        , height = 1000
-#                                                        )
-#                              ) # end of column
-#                    ) # end of box
-#             ) # end of fluidrow
-#             ) # end of Citywide tab
-#     )
-#   ) # end of body
+ui <- fillPage( leaflet::leafletOutput( outputId = "mymap", height = "100%" ) )
 
 
 # Create a server
@@ -438,91 +338,73 @@ server <- function( input, output ) {
   }) # end of renderleaflet
   
   # Dynamic Legend
-   observeEvent( input$mymap_groups,{
-   
-     mymap <- leafletProxy( "mymap" ) %>% clearControls()
-   
-     if( input$mymap_groups == "Percent of Crowded Housing" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_crowded
-                                    , values = merged$PERCENT.OF.HOUSING.CROWDED
+  observeEvent( input$mymap_groups,{
+    
+    mymap <- leafletProxy( "mymap" ) %>% clearControls()
+    
+    if( input$mymap_groups == "Percent of Crowded Housing" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "0.0 - 1.8%", "1.9 - 3.2%", "3.3 - 4.5%", "4.6 - 7.4%", "7.5 - 15.8%" )
-                                    #, labFormat = labelFormat( suffix = "%" )
                                     , opacity = 1
                                     , group = "Percent of Crowded Housing"
-       ) }
-     else if( input$mymap_groups == "Percent of Households Below Poverty" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_poverty
-                                    , values = merged$PERCENT.HOUSEHOLDS.BELOW.POVERTY
+      ) }
+    else if( input$mymap_groups == "Percent of Households Below Poverty" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "0.0 - 12.3%", "12.4 - 16.9%", "17.0 - 21.7%", "21.8 - 29.6%", "29.7 - 56.5%" )
-                                    #, labFormat = labelFormat( suffix = "%" )
                                     , opacity = 1
                                     , group = "Percent of Households Below Poverty"
-       ) }
-     else if( input$mymap_groups == "Percent of Aged 16+ Unemployed" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_unemployed
-                                    , values = merged$PERCENT.AGED.16..UNEMPLOYED
+      ) }
+    else if( input$mymap_groups == "Percent of Aged 16+ Unemployed" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "0.0 - 8.7%", "8.8 - 11.7%", "11.8 - 16.5%", "16.6 - 21.1%", "21.2 - 35.9%" )
-                                    #, labFormat = labelFormat( suffix = "%" )
                                     , opacity = 1
                                     , group = "Percent of Aged 16+ Unemployed"
-       ) }
-     else if( input$mymap_groups == "Percent of Aged 25+ Without High School Diploma" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_diploma
-                                    , values = merged$PERCENT.AGED.25..WITHOUT.HIGH.SCHOOL.DIPLOMA
+      ) }
+    else if( input$mymap_groups == "Percent of Aged 25+ Without High School Diploma" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "0.0 - 10.9%", "11.0 - 15.9%", "16.0 - 20.8%", "20.9 - 28.5%", "28.6 - 54.8%" )
-                                    #, labFormat = labelFormat( suffix = "%" )
                                     , opacity = 1
                                     , group = "Percent of Aged 25+ Without High School Diploma"
-       ) }
-     else if( input$mymap_groups == "Percent of Aged Under 18 or Over 64" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_age
-                                    , values = merged$PERCENT.AGED.UNDER.18.OR.OVER.64
+      ) }
+    else if( input$mymap_groups == "Percent of Aged Under 18 or Over 64" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "0.0 - 30.7%", "30.8 - 36.4%", "36.5 - 39.0%", "39.1 - 41.0%", "41.1 - 51.5%" )
-                                    #, labFormat = labelFormat( suffix = "%" )
                                     , opacity = 1
                                     , group = "Percent of Aged Under 18 or Over 64"
-       ) }
-     else if( input$mymap_groups == "Per Capita Income" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_income
-                                    , values = merged$PER.CAPITA.INCOME
+      ) }
+    else if( input$mymap_groups == "Per Capita Income" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "$0 - 14,685", "$14,686 - 17,949", "$17,950 - 23,791", "$23,792 - 33,385", "$33,386 - 88,669" )
-                                    #, labFormat = labelFormat( prefix = "$" )
                                     , opacity = 1
                                     , group = "Per Capita Income"
-       ) }
-     else if( input$mymap_groups == "Hardship Index" ) {
-       mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color_ramp_hardship
-                                    , values = merged$HARDSHIP.INDEX
+      ) }
+    else if( input$mymap_groups == "Hardship Index" ) {
+      mymap <- mymap %>% addLegend( "bottomright"
+                                    , colors = color.ramp
                                     , title = "Legend"
                                     , labels = c( "0 - 20", "21 - 39", "40 - 58", "59 - 78", "79 - 98" )
                                     , opacity = 1
                                     , group = "Hardship Index"
-       ) } # end of else if
-   }
-   ) # end of observe event
+      ) } # end of else if
+  }
+  ) # end of observe event
   
 } # closing out server
 
 
-# Create the UI
-
-ui <- fillPage( leaflet::leafletOutput( outputId = "mymap", height = "100%" ) )
-
-# Preview the UI in the console
+# Run the Shiny app object
 shinyApp( ui, server )
 
-
-
+# end of script #
