@@ -181,6 +181,13 @@ label_hardship <- lapply(
   )
   , HTML)
 
+# Make north arrow
+north_arrow <- makeIcon(
+  iconUrl = "http://www.clker.com/cliparts/0/o/K/m/i/y/north-arrow-orienteering.svg"
+  , iconWidth = 60
+  , iconHeight = 60
+)
+
 # Make map
 census_map <- 
   leaflet( data = comarea
@@ -198,6 +205,16 @@ census_map <-
            , lat = 41.832249
            , zoom = 11
   ) %>%
+
+  # add north arrow
+  # note : assigning a specific lng and lat only works
+  #        because the zoom in/out function is disabled
+  #        for this particular map
+  #        if it's not disabled, use addControl instead
+  addMarkers( lng = -88.173643
+              , lat = 41.638735
+              , icon = north_arrow
+              ) %>%
   
   # add Crowded Housing polygons
   addPolygons( smoothFactor = 0.3
