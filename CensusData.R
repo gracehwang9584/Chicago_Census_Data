@@ -43,9 +43,9 @@ comarea <- readOGR( dsn = "https://data.cityofchicago.org/api/geospatial/cauq-8y
 
 # Merge the non-spatial data frame onto spatial polygon data frame
 comarea <- sp::merge( x = comarea
-                     , y = census.data
-                     , by.x = "area_numbe"
-                     , by.y = "Community.Area.Number"
+                      , y = census.data
+                      , by.x = "area_numbe"
+                      , by.y = "Community.Area.Number"
 )
 
 # Make colors
@@ -114,7 +114,9 @@ comarea$color_hardship <- as.character(
     , breaks = 5
     , labels = color.ramp
   )
-)
+) 
+
+
 
 # Make hover labels
 # Courtesy of https://github.com/USAspendingexplorer/USAspending-explorer/blob/master/Build%20App/leaflet_ny.r#L36
@@ -181,21 +183,25 @@ label_hardship <- lapply(
   )
   , HTML)
 
-# Make north arrow
-north_arrow <- makeIcon(
-  iconUrl = "http://www.clker.com/cliparts/0/o/K/m/i/y/north-arrow-orienteering.svg"
-  , iconWidth = 60
-  , iconHeight = 60
+# north arrow icon url
+northArrowIcon <- "<img src='http://ian.umces.edu/imagelibrary/albums/userpics/10002/normal_ian-symbol-north-arrow-2.png' style='width:40px;height:60px;'>"
+
+
+# make custom map title
+mapTitle <- paste0(
+  "<p style='color:#660066; font-size:20px;'>"
+  , "Census Data - Selected socioeconomic indicators in Chicago, 2008 - 2012"
+  , "</p>"
 )
 
 # Make map
 census_map <- 
   leaflet( data = comarea
            , options = leafletOptions( zoomControl = FALSE
-                                                   , minZoom = 11
-                                                   , maxZoom = 11
-                                                   , dragging = FALSE
-                                                   ) ) %>%
+                                       , minZoom = 11
+                                       , maxZoom = 11
+                                       , dragging = FALSE
+           ) ) %>%
   
   # add background to map
   addTiles( urlTemplate = "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png" ) %>%
@@ -203,18 +209,8 @@ census_map <-
   # set zoom level
   setView( lng = -87.707988
            , lat = 41.832249
-           , zoom = 11
-  ) %>%
+           , zoom = 11 ) %>%
 
-  # add north arrow
-  # note : assigning a specific lng and lat only works
-  #        because the zoom in/out function is disabled
-  #        for this particular map
-  #        if it's not disabled, use addControl instead
-  addMarkers( lng = -88.173643
-              , lat = 41.638735
-              , icon = north_arrow
-              ) %>%
   
   # add Crowded Housing polygons
   addPolygons( smoothFactor = 0.3
@@ -223,14 +219,13 @@ census_map <-
                , color = "white"
                , label = label_crowded
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Percent of Crowded Housing"
-  ) %>%
+               , group = "Percent of Crowded Housing" ) %>%
   
   # Add Poverty polygons
   addPolygons( smoothFactor = 0.3
@@ -239,14 +234,13 @@ census_map <-
                , color = "white"
                , label = label_poverty
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Percent of Households Below Poverty"
-  ) %>%
+               , group = "Percent of Households Below Poverty" ) %>%
   
   # Add Unemployed polygons
   addPolygons( smoothFactor = 0.3
@@ -255,14 +249,13 @@ census_map <-
                , color = "white"
                , label = label_unemployed
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Percent of Aged 16+ Unemployed"
-  ) %>%
+               , group = "Percent of Aged 16+ Unemployed" ) %>%
   
   # Add Diploma polygons
   addPolygons( smoothFactor = 0.3
@@ -271,14 +264,13 @@ census_map <-
                , color = "white"
                , label = label_diploma
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Percent of Aged 25+ Without High School Diploma"
-  ) %>%
+               , group = "Percent of Aged 25+ Without High School Diploma" ) %>%
   
   # Add Age polygons
   addPolygons( smoothFactor = 0.3
@@ -287,14 +279,13 @@ census_map <-
                , color = "white"
                , label = label_age
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Percent of Aged Under 18 or Over 64"
-  ) %>%
+               , group = "Percent of Aged Under 18 or Over 64" ) %>%
   
   # Add Income polygons
   addPolygons( smoothFactor = 0.3
@@ -303,14 +294,13 @@ census_map <-
                , color = "white"
                , label = label_income
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Per Capita Income"
-  ) %>%
+               , group = "Per Capita Income" ) %>%
   
   # Add Hardship polygons
   addPolygons( smoothFactor = 0.3
@@ -319,14 +309,13 @@ census_map <-
                , color = "white"
                , label = label_hardship
                , labelOptions = labelOptions( style = list( "font-weight" = "normal" )
-                                              ,textsize = "15px"
+                                              , textsize = "15px"
                )
                , highlightOptions = highlightOptions( color = "black"
                                                       , weight = 6
                                                       , bringToFront = TRUE
                )
-               , group = "Hardship Index"
-  ) %>%
+               , group = "Hardship Index" ) %>%
   
   # add Layers control
   addLayersControl( baseGroups = c( "Percent of Crowded Housing"
@@ -335,11 +324,9 @@ census_map <-
                                     , "Percent of Aged 25+ Without High School Diploma"
                                     , "Percent of Aged Under 18 or Over 64"
                                     , "Per Capita Income"
-                                    , "Hardship Index"
-  )
-  , position = "topright"
-  , options = layersControlOptions( collapsed = FALSE )
-  ) 
+                                    , "Hardship Index" )
+                    , position = "topright"
+                    , options = layersControlOptions( collapsed = FALSE ) ) 
 
 # Create the UI
 
@@ -360,63 +347,126 @@ server <- function( input, output ) {
     mymap <- leafletProxy( "mymap" ) %>% clearControls()
     
     if( input$mymap_groups == "Percent of Crowded Housing" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "0.0 - 1.8%", "1.9 - 3.2%", "3.3 - 4.5%", "4.6 - 7.4%", "7.5 - 15.8%" )
-                                    , opacity = 1
-                                    , group = "Percent of Crowded Housing"
-      ) }
-    else if( input$mymap_groups == "Percent of Households Below Poverty" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "0.0 - 12.3%", "12.4 - 16.9%", "17.0 - 21.7%", "21.8 - 29.6%", "29.7 - 56.5%" )
-                                    , opacity = 1
-                                    , group = "Percent of Households Below Poverty"
-      ) }
-    else if( input$mymap_groups == "Percent of Aged 16+ Unemployed" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "0.0 - 8.7%", "8.8 - 11.7%", "11.8 - 16.5%", "16.6 - 21.1%", "21.2 - 35.9%" )
-                                    , opacity = 1
-                                    , group = "Percent of Aged 16+ Unemployed"
-      ) }
-    else if( input$mymap_groups == "Percent of Aged 25+ Without High School Diploma" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "0.0 - 10.9%", "11.0 - 15.9%", "16.0 - 20.8%", "20.9 - 28.5%", "28.6 - 54.8%" )
-                                    , opacity = 1
-                                    , group = "Percent of Aged 25+ Without High School Diploma"
-      ) }
-    else if( input$mymap_groups == "Percent of Aged Under 18 or Over 64" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "0.0 - 30.7%", "30.8 - 36.4%", "36.5 - 39.0%", "39.1 - 41.0%", "41.1 - 51.5%" )
-                                    , opacity = 1
-                                    , group = "Percent of Aged Under 18 or Over 64"
-      ) }
-    else if( input$mymap_groups == "Per Capita Income" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "$0 - 14,685", "$14,686 - 17,949", "$17,950 - 23,791", "$23,792 - 33,385", "$33,386 - 88,669" )
-                                    , opacity = 1
-                                    , group = "Per Capita Income"
-      ) }
-    else if( input$mymap_groups == "Hardship Index" ) {
-      mymap <- mymap %>% addLegend( "bottomright"
-                                    , colors = color.ramp
-                                    , title = "Legend"
-                                    , labels = c( "0 - 20", "21 - 39", "40 - 58", "59 - 78", "79 - 98" )
-                                    , opacity = 1
-                                    , group = "Hardship Index"
-      ) } # end of else if
-  }
-  ) # end of observe event
+      mymap <- mymap %>% 
+        addLegend( "bottomright"
+                   , colors = color.ramp
+                   , title = "Legend"
+                   , labels = c( "0.3% - 1.8%"
+                                 , "1.9% - 3.2%"
+                                 , "3.3% - 4.5%"
+                                 , "4.6% - 7.4%"
+                                 , "7.5% - 15.8%" )
+                   , opacity = 1
+                   , group = "Percent of Crowded Housing" ) %>%
+        addControl( html = mapTitle
+                    , position = "topleft" ) %>%
+        addControl( html = northArrowIcon
+                    , position = "bottomleft" )
+        
+      } else if( input$mymap_groups == "Percent of Households Below Poverty" ) {
+        mymap <- mymap %>% 
+          addLegend( "bottomright"
+                     , colors = color.ramp
+                     , title = "Legend"
+                     , labels = c( "3.3% - 12.3%"
+                                   , "12.9% - 16.9%"
+                                   , "17.1% - 21.7%"
+                                   , "23.4% - 29.6%"
+                                   , "29.8% - 56.5%" )
+                     , opacity = 1
+                     , group = "Percent of Households Below Poverty" ) %>%
+          addControl( html = mapTitle
+                , position = "topleft" ) %>%
+          addControl( html = northArrowIcon
+                      , position = "bottomleft" )
+        
+      } else if( input$mymap_groups == "Percent of Aged 16+ Unemployed" ) {
+      mymap <- mymap %>%
+        addLegend( "bottomright"
+                   , colors = color.ramp
+                   , title = "Legend"
+                   , labels = c( "4.7%- 8.7%"
+                                 , "8.8% - 11.7%"
+                                 , "12.1% - 16.5%"
+                                 , "16.7% - 21.1%"
+                                 , "21.2% - 35.9%" )
+                   , opacity = 1
+                   , group = "Percent of Aged 16+ Unemployed" ) %>%
+        addControl( html = mapTitle
+                , position = "topleft" ) %>%
+        addControl( html = northArrowIcon
+                    , position = "bottomleft" )
+      
+      } else if( input$mymap_groups == "Percent of Aged 25+ Without High School Diploma" ) {
+      mymap <- mymap %>%
+        addLegend( "bottomright"
+                   , colors = color.ramp
+                   , title = "Legend"
+                   , labels = c( "2.5% - 10.9%"
+                                 , "11.0% - 15.9%"
+                                 , "16.2% - 20.8%"
+                                 , "21.0% - 28.5%"
+                                 , "31.2% - 54.8%" )
+                   , opacity = 1
+                   , group = "Percent of Aged 25+ Without High School Diploma" ) %>%
+        addControl( html = mapTitle
+                    , position = "topleft" ) %>%
+        addControl( html = northArrowIcon
+                    , position = "bottomleft" )
+      
+      } else if( input$mymap_groups == "Percent of Aged Under 18 or Over 64" ) {
+        mymap <- mymap %>% 
+          addLegend( "bottomright"
+                     , colors = color.ramp
+                     , title = "Legend"
+                     , labels = c( "13.5% - 30.7%"
+                                   , "31.0% - 36.4%"
+                                   , "36.8% - 39.0%"
+                                   , "39.2% - 41.0%"
+                                   , "41.1% - 51.5%" )
+                     , opacity = 1
+                     , group = "Percent of Aged Under 18 or Over 64" ) %>%
+          addControl( html = mapTitle
+                      , position = "topleft" ) %>%
+          addControl( html = northArrowIcon
+                      , position = "bottomleft" )
+      
+      } else if( input$mymap_groups == "Per Capita Income" ) {
+        mymap <- mymap %>% 
+          addLegend( "bottomright"
+                     , colors = color.ramp
+                     , title = "Legend"
+                     , labels = c( "$8,201 - $14,685"
+                                   , "$15,089 - $17,949"
+                                   , "$18,672 - $23,791"
+                                   , "$23,939 - $33,385"
+                                   , "$34,381 - $88,669" )
+                     , opacity = 1
+                     , group = "Per Capita Income" ) %>%
+          addControl( html = mapTitle
+                      , position = "topleft" ) %>%
+          addControl( html = northArrowIcon
+                      , position = "bottomleft" )
+      
+      } else if( input$mymap_groups == "Hardship Index" ) {
+        mymap <- mymap %>% 
+          addLegend( "bottomright"
+                     , colors = color.ramp
+                     , title = "Legend"
+                     , labels = c( "1 - 20"
+                                   , "21 - 39"
+                                   , "41 - 58"
+                                   , "60 - 78"
+                                   , "79 - 98" )
+                     , opacity = 1
+                     , group = "Hardship Index" ) %>%
+          addControl( html = mapTitle
+                      , position = "topleft" ) %>%
+          addControl( html = northArrowIcon
+                      , position = "bottomleft" )
+      } # end of else if statements
+    
+  }) # end of observe event
   
 } # closing out server
 
